@@ -13,8 +13,27 @@
 | 产物 | 说明 |
 | --- | --- |
 | `TwinDesk-Setup-<ver>-zh-CN.exe` | Windows x64 安装版（NSIS，perMachine，需管理员权限） |
+| `TwinDesk-<ver>-zh-CN-android.apk` | Android 端（standard 版，minSdk 29 / targetSdk 36，debug 签名，含内置遥控网页与原生词表中文） |
 
 安装包由上游源码 + 本仓库补丁构建，未重新签名；首次运行可能触发 SmartScreen 提示，选「更多信息 → 仍要运行」。
+
+## 安卓版
+
+`android/` 是上游自带的原生壳，界面大部分由内置网页（`assets/web/`）承担，两处中文都需要补：
+
+| 位置 | 处理 |
+| --- | --- |
+| `android/app/src/main/assets/web/` | 与桌面端同源，挂 `zh-extra.js` |
+| `android/app/src/main/assets/i18n/zh-CN.json` | 1169 条，保留英文的只有 CPU、Deck、ReZume、Tab、USB 与手柄键名 Back/Start |
+
+构建（需 JDK 21 + Android SDK：platforms;android-37.0、build-tools;37.0.0、platform-tools）：
+
+```powershell
+cd android
+./gradlew :app:assembleStandardRelease   # 产物 app/build/outputs/apk/standard/release/*.apk
+```
+
+release 沿用上游配置用 debug key 签名，与商店版签名不同，不能覆盖安装。
 
 ## 汉化范围
 
