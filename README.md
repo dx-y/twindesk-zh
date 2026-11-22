@@ -38,7 +38,7 @@ patches/v3.2.1-zh-CN.patch    代码层改动（英文写死文案 + 词表回�
 scripts/fetch-upstream.ps1    下载上游指定 tag 源码
 scripts/apply-zh.ps1          应用补丁 + 布置词表 + 校验
 scripts/build-windows.ps1     安装依赖并构建 NSIS 安装包
-.github/workflows/            可选：手动触发的云端构建与发布
+.github/workflows/            可选：云端构建与发布（现放 docs/workflows/，见下节）
 docs/                         汉化说明与校验报告
 ```
 
@@ -55,6 +55,13 @@ docs/                         汉化说明与校验报告
 
 上游小版本若只改文案，第 2 步通常可直接通过；若 `git apply` 报冲突，按报告里的块位置把新英文补进
 `patches/<新tag>-zh-CN.patch` 与 `i18n/zh-extra.js` 即可，词表格式不变。
+
+## 可选的云端构建
+
+`docs/workflows/` 下有两份手动触发的工作流（`build-windows-zh`、`publish-release`）。
+把它们复制到 `.github/workflows/` 即可在 GitHub 上构建并发布，本机无需装 Node 与 SDK。
+注意推送工作流文件要求 gh 具备 `workflow` 权限（`gh auth refresh -s workflow`），
+仓库默认不放这两份文件就是为了让普通 token 也能推送。
 
 ## 许可
 
