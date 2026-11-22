@@ -38,6 +38,7 @@ patches/v3.2.1-zh-CN.patch    代码层改动（英文写死文案 + 词表回�
 scripts/fetch-upstream.ps1    下载上游指定 tag 源码
 scripts/apply-zh.ps1          应用补丁 + 布置词表 + 校验
 scripts/build-windows.ps1     安装依赖并构建 NSIS 安装包
+scripts/verify-zh.js          词表回归：999 条键是否都落到中文、其他语言是否受影响
 .github/workflows/            可选：云端构建与发布（现放 docs/workflows/，见下节）
 docs/                         汉化说明与校验报告
 ```
@@ -51,7 +52,13 @@ docs/                         汉化说明与校验报告
 .\scripts\apply-zh.ps1 -Tag v3.2.1
 # 3. 构建（本机无 Windows SDK 时加 -SkipHelper，复用上游预编译 helper）
 .\scripts\build-windows.ps1 -SkipHelper
+# 4. 词表回归（任何一步改了文案都先跑这个，退出码非 0 说明有键掉回英文）
+node scripts/verify-zh.js build/src/TwinDesk-3.2.1
 ```
+
+`verify-zh.js` 的判定：键值里出现汉字或中文标点即视为已汉化；只有产品名、协议名、键位
+（TwinDesk、AirPlay、Full KVM、Esc、App ID、Mac 等）允许保持拉丁字母，其余一律视为漏译。
+当前版本结果：999 条中 989 条中文、10 条按约定保留，英文环境 `en.t()` 输出不变。
 
 上游小版本若只改文案，第 2 步通常可直接通过；若 `git apply` 报冲突，按报告里的块位置把新英文补进
 `patches/<新tag>-zh-CN.patch` 与 `i18n/zh-extra.js` 即可，词表格式不变。
