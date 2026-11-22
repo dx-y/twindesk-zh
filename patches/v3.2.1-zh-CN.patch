@@ -1,0 +1,1252 @@
+diff --git a/android/app/src/main/assets/web/audio.html b/android/app/src/main/assets/web/audio.html
+index 3aa3a32..16e91df 100644
+--- a/android/app/src/main/assets/web/audio.html
++++ b/android/app/src/main/assets/web/audio.html
+@@ -1,4 +1,4 @@
+ <!doctype html>
+ <!-- TwinDesk — Copyright (C) 2026 inukaasith. GPL-3.0, see LICENSE. -->
+ <html><head><meta charset="utf-8"><title>Mac sound</title></head>
+-<body><audio id="out" autoplay></audio><script src="audio.js"></script></body></html>
++<body><audio id="out" autoplay></audio><script src="zh-extra.js"></script><script src="audio.js"></script></body></html>
+diff --git a/android/app/src/main/assets/web/remote.html b/android/app/src/main/assets/web/remote.html
+index 352484c..1b7b117 100644
+--- a/android/app/src/main/assets/web/remote.html
++++ b/android/app/src/main/assets/web/remote.html
+@@ -125,6 +125,6 @@
+   <div id="motion-ask" hidden><p id="motion-ask-text"></p><button id="motion-ok" data-i18n>Allow motion</button></div>
+ 
+   <textarea id="kbd" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
+-  <script src="remote.js"></script>
++  <script src="zh-extra.js"></script><script src="remote.js"></script>
+ </body>
+ </html>
+diff --git a/android/app/src/main/assets/web/remote.js b/android/app/src/main/assets/web/remote.js
+index 0108cc6..7abe2f3 100644
+--- a/android/app/src/main/assets/web/remote.js
++++ b/android/app/src/main/assets/web/remote.js
+@@ -25,8 +25,16 @@
+   const tick = () => { try { TD.tick(); } catch (_) { /* older app */ } };
+   const $ = (id) => document.getElementById(id);
+   // The app's language (I18n.kt through TD.tr): {name} parts filled from vars, English without the app.
+-  const t = (text, vars = {}) => (typeof TD.tr === 'function' ? TD.tr(text, JSON.stringify(vars))
+-    : text.replace(/^[^|]*\|/, '').replace(/\{(\w+)\}/g, (m, k) => (k in vars ? String(vars[k]) : m)));
++  // Where the app has no entry either, zh-extra.js carries the Simplified Chinese (the app's catalogs
++  // and this page above it come first; without an app the page stays English).
++  const fill = (s, vars) => s.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? String(vars[k]) : m));
++  const t = (text, vars = {}) => {
++    const said = typeof TD.tr === 'function' ? TD.tr(text, JSON.stringify(vars)) : '';
++    if (said && said !== text) return said;
++    const extra = window.TwinDeskZhExtra;
++    if (extra && Object.prototype.hasOwnProperty.call(extra, text)) return fill(extra[text].replace(/^[^|]*\|/, ''), vars);
++    return fill(text.replace(/^[^|]*\|/, ''), vars);
++  };
+   for (const e of document.querySelectorAll('[data-i18n]')) e.textContent = t(e.dataset.i18n || e.textContent);
+   for (const e of document.querySelectorAll('[aria-label]')) e.setAttribute('aria-label', t(e.getAttribute('aria-label')));
+   for (const e of document.querySelectorAll('[placeholder]')) e.placeholder = t(e.placeholder);
+diff --git a/android/app/src/main/assets/web/viewer.html b/android/app/src/main/assets/web/viewer.html
+index c8203aa..16a1dd6 100644
+--- a/android/app/src/main/assets/web/viewer.html
++++ b/android/app/src/main/assets/web/viewer.html
+@@ -12,6 +12,6 @@
+   <audio id="audio" autoplay></audio>
+   <div id="overlay">Waiting for the computer…</div>
+   <textarea id="kbd" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
+-  <script src="viewer.js"></script>
++  <script src="zh-extra.js"></script><script src="viewer.js"></script>
+ </body>
+ </html>
+diff --git a/android/app/src/main/assets/web/viewer.js b/android/app/src/main/assets/web/viewer.js
+index f98d41a..ed71a04 100644
+--- a/android/app/src/main/assets/web/viewer.js
++++ b/android/app/src/main/assets/web/viewer.js
+@@ -22,8 +22,16 @@
+   const overlay = document.getElementById('overlay');
+   const kbd = document.getElementById('kbd');
+   // The app's language (I18n.kt through TD.tr): {name} parts filled from vars, English without the app.
+-  const t = (text, vars = {}) => (typeof TD.tr === 'function' ? TD.tr(text, JSON.stringify(vars))
+-    : text.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? String(vars[k]) : m)));
++  // Where the app has no entry either, zh-extra.js carries the Simplified Chinese (the app's catalogs
++  // and this page above it come first; without an app the page stays English).
++  const fill = (s, vars) => s.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? String(vars[k]) : m));
++  const t = (text, vars = {}) => {
++    const said = typeof TD.tr === 'function' ? TD.tr(text, JSON.stringify(vars)) : '';
++    if (said && said !== text) return said;
++    const extra = window.TwinDeskZhExtra;
++    if (extra && Object.prototype.hasOwnProperty.call(extra, text)) return fill(extra[text].replace(/^[^|]*\|/, ''), vars);
++    return fill(text.replace(/^[^|]*\|/, ''), vars);
++  };
+   const TD = window.TD;
+   const send = (m) => TD.send(JSON.stringify(m));
+   // in.mm straight to the socket (WebHost's TD.move): no object or JSON per pointer event.
+diff --git a/shared/about.js b/shared/about.js
+index abe6fe6..79e90a8 100644
+--- a/shared/about.js
++++ b/shared/about.js
+@@ -18,9 +18,9 @@ const LINKS = {
+   siteAndroid: 'https://twin-desk.vercel.app/#android',
+ };
+ 
+-const NAME = { darwin: 'TwinDesk for macOS', win32: 'TwinDesk for Windows', linux: 'TwinDesk for Linux' };
++const NAME = { darwin: 'TwinDesk for macOS', win32: 'Windows 版 TwinDesk', linux: 'TwinDesk for Linux' };
+ const THANKS = { darwin: 'DeskPad (virtual display header, MIT)' };
+-const ARCH = { x64: '64-bit Intel/AMD (x64)', arm64: 'ARM 64-bit (arm64)', ia32: '32-bit (x86)' };
++const ARCH = { x64: '64 位 Intel/AMD (x64)', arm64: 'ARM 64 位 (arm64)', ia32: '32 位 (x86)' };
+ 
+ function systemVersion() {
+   try { return process.getSystemVersion(); } catch (_) { return os.release(); } // Electron only
+diff --git a/shared/deck-catalog.js b/shared/deck-catalog.js
+index 9c2ea48..35185b4 100644
+--- a/shared/deck-catalog.js
++++ b/shared/deck-catalog.js
+@@ -15,11 +15,11 @@
+     { id: 'display', name: 'Display' },
+     { id: 'windows', name: 'Windows' },
+     { id: 'system', name: 'System' },
+-    { id: 'open', name: 'Apps and websites' },
+-    { id: 'files', name: 'Files and scripts' },
++    { id: 'open', name: '应用与网站' },
++    { id: 'files', name: '文件与脚本' },
+     { id: 'clipboard', name: 'Clipboard' },
+-    { id: 'widgets', name: 'Widgets' },
+-    { id: 'deck', name: 'Deck navigation' },
++    { id: 'widgets', name: '小部件' },
++    { id: 'deck', name: '卡组导航' },
+   ];
+ 
+   // needs: a caps key (deck.js) that must be true; only: platforms that have it.
+diff --git a/shared/deck-model.js b/shared/deck-model.js
+index 5cf8494..d515f99 100644
+--- a/shared/deck-model.js
++++ b/shared/deck-model.js
+@@ -212,7 +212,7 @@
+     const cols = int(l.cols, GRID[0], GRID[1], 4), rows = int(l.rows, GRID[0], GRID[1], 3);
+     return {
+       v: 2,
+-      spaces: [{ id: 'deck', name: 'Deck', kind: 'tiles', pages: (Array.isArray(l.pages) ? l.pages : []).map((p) => p && ({
++      spaces: [{ id: 'deck', name: '面板', kind: 'tiles', pages: (Array.isArray(l.pages) ? l.pages : []).map((p) => p && ({
+         id: p.id, name: p.name, cols, rows,
+         tiles: (Array.isArray(p.buttons) ? p.buttons : []).map((b) => b && ({
+           ...b, x: Number(b.slot) % cols, y: Math.floor(Number(b.slot) / cols), w: 1, h: 1,
+@@ -255,7 +255,7 @@
+         const g = shape(p, int(p.cols, GRID[0], GRID[1], 4), int(p.rows, GRID[0], GRID[1], 4), orient);
+         return { id: uniq(ids, 'p', p.id), name: line(p.name, 30) || `Page ${j + 1}`, cols: g.cols, rows: g.rows, fit: orient, tiles: tiles(g.list, g.cols, g.rows) };
+       }).filter(Boolean);
+-      return { id, name, kind: 'tiles', pages: pages.length ? pages : [{ id: uniq(ids, 'p'), name: 'Page 1', ...fit(4, orient), fit: orient, tiles: [] }] };
++      return { id, name, kind: 'tiles', pages: pages.length ? pages : [{ id: uniq(ids, 'p'), name: '第 1 页', ...fit(4, orient), fit: orient, tiles: [] }] };
+     }).filter(Boolean);
+     const out = { v: 2, swipe: { pages: sw.pages !== false, spaces: sw.spaces !== false }, orient, spaces };
+     if (!spaces.length) return normalize(starter());
+@@ -272,12 +272,12 @@
+   function starterLayouts() {
+     const z = (x, y, w, h) => ({ x, y, w, h });
+     return [
+-      { id: 'full', name: 'Full', zones: [z(0, 0, 12, 12)] },
+-      { id: 'halves', name: 'Halves', zones: [z(0, 0, 6, 12), z(6, 0, 6, 12)] },
+-      { id: 'thirds', name: 'Thirds', zones: [z(0, 0, 4, 12), z(4, 0, 4, 12), z(8, 0, 4, 12)] },
+-      { id: 'focus', name: 'Main and side', zones: [z(0, 0, 8, 12), z(8, 0, 4, 12)] },
+-      { id: 'quarters', name: 'Quarters', zones: [z(0, 0, 6, 6), z(6, 0, 6, 6), z(0, 6, 6, 6), z(6, 6, 6, 6)] },
+-      { id: 'center', name: 'Centered', zones: [z(2, 1, 8, 10)] },
++      { id: 'full', name: '整屏', zones: [z(0, 0, 12, 12)] },
++      { id: 'halves', name: '两分', zones: [z(0, 0, 6, 12), z(6, 0, 6, 12)] },
++      { id: 'thirds', name: '三分', zones: [z(0, 0, 4, 12), z(4, 0, 4, 12), z(8, 0, 4, 12)] },
++      { id: 'focus', name: '主区与侧栏', zones: [z(0, 0, 8, 12), z(8, 0, 4, 12)] },
++      { id: 'quarters', name: '四分', zones: [z(0, 0, 6, 6), z(6, 0, 6, 6), z(0, 6, 6, 6), z(6, 6, 6, 6)] },
++      { id: 'center', name: '居中', zones: [z(2, 1, 8, 10)] },
+     ];
+   }
+ 
+@@ -290,36 +290,36 @@
+       swipe: { pages: true, spaces: true },
+       orient: 'landscape',
+       spaces: [
+-        { id: 'deck', name: 'Deck', kind: 'tiles', pages: [
+-          { id: 'main', name: 'Main', cols: 4, rows: 4, tiles: [
+-            t('play', 0, 0, 2, 1, 'Play or pause', '', '#2c2c2e', { k: 'media', what: 'playpause' }),
+-            t('prev', 2, 0, 1, 1, 'Previous', '', '#2c2c2e', { k: 'media', what: 'prev' }),
+-            t('next', 3, 0, 1, 1, 'Next', '', '#2c2c2e', { k: 'media', what: 'next' }),
+-            t('vol', 0, 1, 2, 1, 'Volume', '', '#2c2c2e', { k: 'slider', what: 'volume' }),
+-            t('bright', 2, 1, 2, 1, 'Brightness', '', '#2c2c2e', { k: 'slider', what: 'bright' }),
+-            t('mute', 0, 2, 1, 1, 'Mute', '', '#ff3b30', { k: 'volume', what: 'toggle' }),
+-            t('mic', 1, 2, 1, 1, 'Microphone', '', '#ff9f0a', { k: 'mic', what: 'toggle' }),
+-            t('shot', 2, 2, 1, 1, 'Screenshot', '', '#5e5ce6', { k: 'sys', what: 'shotarea' }),
+-            t('lock', 3, 2, 1, 1, 'Lock', '', '#2c2c2e', { k: 'sys', what: 'lock' }),
+-            t('copy', 0, 3, 1, 1, 'Copy', '', '#30b94d', { k: 'clip', what: 'copy' }),
+-            t('paste', 1, 3, 1, 1, 'Paste', '', '#30b94d', { k: 'clip', what: 'paste' }),
+-            t('desk', 2, 3, 1, 1, 'Desktop', '', '#0a84ff', { k: 'sys', what: 'desktop' }),
+-            t('keys', 3, 3, 1, 1, 'Shortcuts', 'keyboard', '#bf5af2', { k: 'nav', what: 'page', to: 'keys' }),
++        { id: 'deck', name: '面板', kind: 'tiles', pages: [
++          { id: 'main', name: '主区', cols: 4, rows: 4, tiles: [
++            t('play', 0, 0, 2, 1, '播放/暂停', '', '#2c2c2e', { k: 'media', what: 'playpause' }),
++            t('prev', 2, 0, 1, 1, '上一个', '', '#2c2c2e', { k: 'media', what: 'prev' }),
++            t('next', 3, 0, 1, 1, '下一个', '', '#2c2c2e', { k: 'media', what: 'next' }),
++            t('vol', 0, 1, 2, 1, '音量', '', '#2c2c2e', { k: 'slider', what: 'volume' }),
++            t('bright', 2, 1, 2, 1, '亮度', '', '#2c2c2e', { k: 'slider', what: 'bright' }),
++            t('mute', 0, 2, 1, 1, '静音', '', '#ff3b30', { k: 'volume', what: 'toggle' }),
++            t('mic', 1, 2, 1, 1, '麦克风', '', '#ff9f0a', { k: 'mic', what: 'toggle' }),
++            t('shot', 2, 2, 1, 1, '截屏', '', '#5e5ce6', { k: 'sys', what: 'shotarea' }),
++            t('lock', 3, 2, 1, 1, '锁定', '', '#2c2c2e', { k: 'sys', what: 'lock' }),
++            t('copy', 0, 3, 1, 1, '复制', '', '#30b94d', { k: 'clip', what: 'copy' }),
++            t('paste', 1, 3, 1, 1, '粘贴', '', '#30b94d', { k: 'clip', what: 'paste' }),
++            t('desk', 2, 3, 1, 1, '桌面', '', '#0a84ff', { k: 'sys', what: 'desktop' }),
++            t('keys', 3, 3, 1, 1, '快捷键', 'keyboard', '#bf5af2', { k: 'nav', what: 'page', to: 'keys' }),
+           ] },
+-          { id: 'keys', name: 'Shortcuts', cols: 4, rows: 4, tiles: [
++          { id: 'keys', name: '快捷键', cols: 4, rows: 4, tiles: [
+             t('esc', 0, 0, 1, 1, 'Esc', '', '#2c2c2e', { k: 'keys', combo: 'Escape' }),
+             t('tab', 1, 0, 1, 1, 'Tab', '', '#2c2c2e', { k: 'keys', combo: 'Tab' }),
+-            t('undo', 2, 0, 1, 1, 'Undo', '', '#2c2c2e', { k: 'keys', combo: 'Mod+KeyZ' }),
+-            t('redo', 3, 0, 1, 1, 'Redo', '', '#2c2c2e', { k: 'keys', combo: 'Mod+Shift+KeyZ' }),
+-            t('up', 1, 1, 1, 1, 'Up', 'up', '#2c2c2e', { k: 'keys', combo: 'ArrowUp' }),
+-            t('left', 0, 2, 1, 1, 'Left', 'left', '#2c2c2e', { k: 'keys', combo: 'ArrowLeft' }),
+-            t('down', 1, 2, 1, 1, 'Down', 'down', '#2c2c2e', { k: 'keys', combo: 'ArrowDown' }),
+-            t('right', 2, 2, 1, 1, 'Right', 'right', '#2c2c2e', { k: 'keys', combo: 'ArrowRight' }),
+-            t('save', 3, 1, 1, 1, 'Save', '', '#0a84ff', { k: 'keys', combo: 'Mod+KeyS' }),
+-            t('find', 3, 2, 1, 1, 'Find', '', '#0a84ff', { k: 'keys', combo: 'Mod+KeyF' }),
+-            t('switch', 0, 3, 2, 1, 'Switch apps', '', '#5e5ce6', { k: 'sys', what: 'switcher' }),
+-            t('newtab', 2, 3, 1, 1, 'New tab', '', '#0a84ff', { k: 'keys', combo: 'Mod+KeyT' }),
+-            t('back', 3, 3, 1, 1, 'Main', 'left', '#bf5af2', { k: 'nav', what: 'page', to: 'main' }),
++            t('undo', 2, 0, 1, 1, '撤销', '', '#2c2c2e', { k: 'keys', combo: 'Mod+KeyZ' }),
++            t('redo', 3, 0, 1, 1, '重做', '', '#2c2c2e', { k: 'keys', combo: 'Mod+Shift+KeyZ' }),
++            t('up', 1, 1, 1, 1, '上', 'up', '#2c2c2e', { k: 'keys', combo: 'ArrowUp' }),
++            t('left', 0, 2, 1, 1, '左', 'left', '#2c2c2e', { k: 'keys', combo: 'ArrowLeft' }),
++            t('down', 1, 2, 1, 1, '下', 'down', '#2c2c2e', { k: 'keys', combo: 'ArrowDown' }),
++            t('right', 2, 2, 1, 1, '右', 'right', '#2c2c2e', { k: 'keys', combo: 'ArrowRight' }),
++            t('save', 3, 1, 1, 1, '保存', '', '#0a84ff', { k: 'keys', combo: 'Mod+KeyS' }),
++            t('find', 3, 2, 1, 1, '查找', '', '#0a84ff', { k: 'keys', combo: 'Mod+KeyF' }),
++            t('switch', 0, 3, 2, 1, '切换应用', '', '#5e5ce6', { k: 'sys', what: 'switcher' }),
++            t('newtab', 2, 3, 1, 1, '新标签页', '', '#0a84ff', { k: 'keys', combo: 'Mod+KeyT' }),
++            t('back', 3, 3, 1, 1, '主区', 'left', '#bf5af2', { k: 'nav', what: 'page', to: 'main' }),
+           ] },
+         ] },
+         { id: 'windows', name: 'Windows', kind: 'windows', layouts: starterLayouts(), sets: [] },
+@@ -338,7 +338,7 @@
+       }
+     }
+     if (opts.windows === false) out.spaces = out.spaces.filter((s) => s.kind !== 'windows');
+-    if (!out.spaces.length) out.spaces = [{ id: 'deck', name: 'Deck', kind: 'tiles', pages: [{ id: 'main', name: 'Page 1', cols: 4, rows: 4, tiles: [] }] }];
++    if (!out.spaces.length) out.spaces = [{ id: 'deck', name: '面板', kind: 'tiles', pages: [{ id: 'main', name: '第 1 页', cols: 4, rows: 4, tiles: [] }] }];
+     return out;
+   }
+ 
+diff --git a/shared/devlocal.js b/shared/devlocal.js
+index 929bdbd..353f3af 100644
+--- a/shared/devlocal.js
++++ b/shared/devlocal.js
+@@ -206,7 +206,7 @@ $o = @{}; if ($bt) { $o.bt = [string]$bt.State }; $v = (Get-ItemProperty -Path '
+     if (!Notification || !Notification.isSupported()) return;
+     const stop = () => { this._ring(false); if (this.onStop) this.onStop(); };
+     const n = new Notification({
+-      title: 'Ringing',
++      title: '响铃中',
+       body: (this.ringFrom ? this.ringFrom : 'Another device') + ' is ringing this computer. Click to stop.',
+       silent: true,
+       timeoutType: 'never',
+diff --git a/shared/histkeeper.js b/shared/histkeeper.js
+index 5031dfd..e74be87 100644
+--- a/shared/histkeeper.js
++++ b/shared/histkeeper.js
+@@ -96,7 +96,7 @@ class HistoryKeeper {
+       const all = merge(cur, kept, p.cap() || 1);
+       if (what === 'clip') { p.obj.history.length = 0; p.obj.history.push(...all); } else p.obj.history = all;
+     } catch (e) {
+-      this.error = 'The saved history couldn’t be opened: ' + (e && e.message ? e.message : 'the key wasn’t given');
++      this.error = 'The saved history couldn’t be opened: ' + (e && e.message ? e.message : '未提供密钥');
+     }
+     this.changed();
+   }
+diff --git a/shared/i18n.js b/shared/i18n.js
+index 8387b76..3c28e62 100644
+--- a/shared/i18n.js
++++ b/shared/i18n.js
+@@ -5,12 +5,20 @@
+     // Only the language in use is read (each catalog is about 200 KB); English is the fallback.
+     const cache = {};
+     const FILES = { en: './lang/en.js', 'zh-CN': './lang/zh-CN.js', ru: './lang/ru.js', tr: './lang/tr.js', 'pt-BR': './lang/pt-BR.js' };
+-    module.exports = factory((locale) => cache[locale] || (FILES[locale] ? (cache[locale] = require(FILES[locale])) : null));
++    // Simplified Chinese reads ./lang/zh-extra.js as well: the messages the code still writes in
++    // English, which no catalog carries.
++    const extra = () => {
++      if (!('TwinDeskZhExtra' in globalThis)) {
++        try { require('./lang/zh-extra.js'); } catch (_) { /* no extra catalog */ }
++      }
++      return globalThis.TwinDeskZhExtra || null;
++    };
++    module.exports = factory((locale) => cache[locale] || (FILES[locale] ? (cache[locale] = require(FILES[locale])) : null), extra);
+   } else {
+     // A window loads English and the chosen language only (shared/lang/pick.js).
+-    root.TwinDeskI18n = factory((locale) => (root.TwinDeskLanguages || {})[locale] || null);
++    root.TwinDeskI18n = factory((locale) => (root.TwinDeskLanguages || {})[locale] || null, () => root.TwinDeskZhExtra || null);
+   }
+-})(typeof globalThis !== 'undefined' ? globalThis : this, function (load) {
++})(typeof globalThis !== 'undefined' ? globalThis : this, function (load, loadExtra) {
+   'use strict';
+   const LANGUAGES = ['en', 'zh-CN', 'ru', 'tr', 'pt-BR'];
+   const own = (obj, key) => obj && Object.prototype.hasOwnProperty.call(obj, key);
+@@ -24,19 +32,22 @@
+     if (/^tr(-|$)/.test(system)) return 'tr';
+     // Every Portuguese locale (pt-BR, pt-PT, pt-AO…) reads Brazilian Portuguese better than English.
+     if (/^pt(-|$)/.test(system)) return 'pt-BR';
+-    return 'en';
++    return 'zh-CN';
+   }
+ 
+   function create(language, catalogs) {
+-    const locale = savedLanguage(language) || 'en';
++    const locale = savedLanguage(language) || 'zh-CN';
+     const get = catalogs ? (l) => catalogs[l] : load;
+     const messages = get(locale) || {};
+     const english = get('en') || {};
++    // Simplified Chinese reads one more catalog after its own: the messages the code still writes in
++    // English (lang/zh-extra.js). Other languages keep their catalog and then English.
++    const extra = locale === 'zh-CN' && typeof loadExtra === 'function' ? (loadExtra() || {}) : {};
+     const textAt = (dict, key) => own(dict, key) && typeof dict[key] === 'string' && dict[key] ? dict[key] : '';
+     return {
+       locale,
+       t(key, vars) {
+-        const text = textAt(messages, key) || textAt(english, key) || key;
++        const text = textAt(messages, key) || textAt(extra, key) || textAt(english, key) || key;
+         // A single pass preserves literal dollars, markup and braces in names or paths.
+         return String(text).replace(/\{(\w+)\}/g, (match, name) => own(vars, name) ? String(vars[name]) : match);
+       },
+diff --git a/shared/iossign-host.js b/shared/iossign-host.js
+index a273bdb..fbc2752 100644
+--- a/shared/iossign-host.js
++++ b/shared/iossign-host.js
+@@ -81,7 +81,7 @@ async function enable(sign, dialog, win) {
+   if (!sign) return;
+   const r = await dialog.showMessageBox(win || undefined, {
+     type: 'warning',
+-    message: 'Not recommended',
++    message: '不推荐',
+     detail: 'TwinDesk will sign in to Apple with your Apple ID to request development certificates and provisioning profiles for your iPhone or iPad. Apple may reject the sign-in, temporarily lock the account, or prevent it from signing apps.\n\nWe recommend AltStore for installing and refreshing TwinDesk.\n\nUse a dedicated Apple ID rather than your primary account.',
+     buttons: ['Cancel', 'Turn On'], defaultId: 0, cancelId: 0,
+   });
+@@ -106,7 +106,7 @@ async function revoke(sign, dialog, serial) {
+     const by = cert.machine || cert.name || 'another tool';
+     const r = await dialog.showMessageBox({
+       type: 'warning',
+-      message: `Revoke the certificate made by ${by}?`,
++      message: `要吊销由 ${by} 制作的证书吗？`,
+       detail: `Apps signed with this certificate, by ${by} or any other tool, stop launching until they are signed again with a new certificate. If ${by} refreshes apps on this device, it has to make a new certificate the next time it runs.\n\nThis cannot be undone.`,
+       buttons: ['Cancel', 'Revoke'], defaultId: 0, cancelId: 0,
+     });
+diff --git a/shared/iossign.js b/shared/iossign.js
+index 2607838..281eebe 100644
+--- a/shared/iossign.js
++++ b/shared/iossign.js
+@@ -110,7 +110,7 @@ class IosSign extends EventEmitter {
+     link.on('welcome', () => { this.phone = null; this._look(); });
+     link.on('closed', () => {
+       this.phone = null;
+-      if (this.run && this.run.from === 'phone') this._end({ kind: 'gone', message: 'The iPhone disconnected' });
++      if (this.run && this.run.from === 'phone') this._end({ kind: 'gone', message: 'iPhone 已断开' });
+       this.emit('change');
+     });
+     const on = (t, fn) => link.on(t, (m) => this._ios() && m && typeof m === 'object' && fn(m));
+@@ -463,10 +463,10 @@ class IosSign extends EventEmitter {
+     const r = this.run;
+     let buf = '';
+     let p;
+-    try { p = spawn(this.bin, [], { stdio: ['pipe', 'pipe', 'ignore'], windowsHide: true }); } catch { return this._end({ kind: 'other', message: 'The signing helper didn’t start' }); }
++    try { p = spawn(this.bin, [], { stdio: ['pipe', 'pipe', 'ignore'], windowsHide: true }); } catch { return this._end({ kind: 'other', message: '签名助手未能启动' }); }
+     r.proc = p;
+     p.stdin.on('error', () => {});
+-    p.on('error', () => { if (this.run === r) this._end({ kind: 'other', message: 'The signing helper didn’t start' }); });
++    p.on('error', () => { if (this.run === r) this._end({ kind: 'other', message: '签名助手未能启动' }); });
+     p.stdout.on('data', (d) => {
+       buf += d;
+       if (buf.length > MAX_LINE * 2) return p.kill();
+@@ -479,7 +479,7 @@ class IosSign extends EventEmitter {
+         if (ev && typeof ev.ev === 'string' && this.run === r) this._event(r, ev);
+       }
+     });
+-    p.on('close', () => { if (this.run === r) this._end(r.failed || (r.finished ? null : { kind: 'other', message: 'The signing helper stopped' }), r.finished); });
++    p.on('close', () => { if (this.run === r) this._end(r.failed || (r.finished ? null : { kind: 'other', message: '签名助手已停止' }), r.finished); });
+     p.stdin.write(`${JSON.stringify(req)}\n`);
+     this._changed();
+   }
+@@ -609,11 +609,11 @@ class IosSign extends EventEmitter {
+     else if (!m.app && !m.ipa) { this._twinDesk(req, udid); this._refreshOnly(req, udid); }
+     else if (again && this.info.anyIpa) { req.ipa = again; this._refreshOnly(req, udid, str(m.app)); }
+     else if (m.app && this.info.anyIpa && (this.apps[udid] || []).some((a) => a.bundleId === str(m.app))) { req.no_ipa = true; this._refreshOnly(req, udid, str(m.app)); }
+-    else if (m.app) return fail({ kind: 'other', message: 'That app isn’t on the device' });
++    else if (m.app) return fail({ kind: 'other', message: '该应用不在设备上' });
+     else if (m.ipa) {
+-      if (!this.info.anyIpa) return fail({ kind: 'other', message: 'This computer’s TwinDesk only installs TwinDesk' });
++      if (!this.info.anyIpa) return fail({ kind: 'other', message: '本机的 TwinDesk 只能安装 TwinDesk' });
+       req.ipa = this._ipa({ path: str(m.ipa.path, 1000), size: Number(m.ipa.size) || 0, fromPhone: true });
+-      if (!req.ipa) return fail({ kind: 'other', message: 'That file isn’t on the computer yet' });
++      if (!req.ipa) return fail({ kind: 'other', message: '该文件还不在本机上' });
+     }
+     this._start({ from: 'phone', udid }, req);
+   }
+diff --git a/shared/lang/pick.js b/shared/lang/pick.js
+index d45f246..26908a0 100644
+--- a/shared/lang/pick.js
++++ b/shared/lang/pick.js
+@@ -6,6 +6,9 @@
+   'use strict';
+   var language = new URLSearchParams(location.search).get('language');
+   if (['zh-CN', 'ru', 'tr', 'pt-BR'].indexOf(language) < 0) return;
+-  var src = document.currentScript.src.replace(/pick\.js([?#].*)?$/, language + '.js');
+-  document.write('<script src="' + src + '"></' + 'script>');
++  var base = document.currentScript.src.replace(/pick\.js([?#].*)?$/, '');
++  // Simplified Chinese reads zh-extra.js too: the messages the code still writes in English, which no
++  // catalog carries (shared/i18n.js keeps it behind the language's own catalog and English).
++  if (language === 'zh-CN') document.write('<script src="' + base + 'zh-extra.js"></' + 'script>');
++  document.write('<script src="' + base + language + '.js"></' + 'script>');
+ })();
+diff --git a/shared/reclaim.js b/shared/reclaim.js
+index 29ccacb..57f4520 100644
+--- a/shared/reclaim.js
++++ b/shared/reclaim.js
+@@ -28,11 +28,11 @@ function unauthRoute(msg, opts) {
+ // It does not mean "take the session". The phone may retry only while both peers retain consent.
+ // A revoked owner is final; a sleeping/busy host never yields its current session.
+ function reclaimDecision(s) {
+-  if (!s || !s.phone) return { ok: false, code: 'bad_message', message: 'Reclaim is only for a paired phone' };
+-  if (s.blocked) return { ok: false, code: 'released', message: 'The Mac disconnected' };
+-  if (s.busy) return { ok: false, code: 'busy', message: 'Connected to another device' };
++  if (!s || !s.phone) return { ok: false, code: 'bad_message', message: '仅可用于已配对的手机' };
++  if (s.blocked) return { ok: false, code: 'released', message: 'Mac 已断开' };
++  if (s.busy) return { ok: false, code: 'busy', message: '已连接到其他设备' };
+   if (s.currentAuthed && s.currentId && s.currentId !== s.selfId) return { ok: false, code: 'busy', message: 'In use by another device' };
+-  if (s.graceId && s.graceId !== s.selfId) return { ok: false, code: 'busy', message: 'In use by another phone' };
++  if (s.graceId && s.graceId !== s.selfId) return { ok: false, code: 'busy', message: '正被另一台手机使用' };
+   return { ok: true };
+ }
+ 
+diff --git a/shared/rezume-shelf.js b/shared/rezume-shelf.js
+index 26358c4..9b85845 100644
+--- a/shared/rezume-shelf.js
++++ b/shared/rezume-shelf.js
+@@ -104,7 +104,7 @@ class ReZumeShelf {
+     const title = o.title || what(o);
+     if (c.notify && Notification.isSupported()) {
+       if (this.note) this.note.close(); // the last one only: every tab there would leave one here
+-      this.note = new Notification({ title: 'Continue from ' + from, body: title + (what(o) && what(o) !== title ? '\n' + what(o) : ''), icon: this._icon(o), silent: true });
++      this.note = new Notification({ title: '继续使用 ' + from, body: title + (what(o) && what(o) !== title ? '\n' + what(o) : ''), icon: this._icon(o), silent: true });
+       this.note.on('click', () => this.rezume.incoming && this.rezume.incoming.id === o.id && this.rezume.take());
+       this.note.show();
+     }
+diff --git a/shared/rezume.js b/shared/rezume.js
+index 14c7428..62ec08d 100644
+--- a/shared/rezume.js
++++ b/shared/rezume.js
+@@ -664,7 +664,7 @@ class ReZume extends EventEmitter {
+       this.waiting = { id: o.id, title: o.name, until: Date.now() + DOC_WAIT_MS, how };
+       if (how === 'copy') this.expectFile('rz-' + o.id, this._cache());
+       this.link.send({ t: T.RZ_TAKE, id: o.id, how });
+-      this.message = 'Getting ' + o.name + '…';
++      this.message = '正在获取 ' + o.name + '…';
+       setTimeout(() => this.waiting && this.waiting.id === o.id && this._failed('It didn’t come'), DOC_WAIT_MS);
+     }
+     this.emit('change');
+diff --git a/shared/ui-deck.js b/shared/ui-deck.js
+index c491b38..c726c0f 100644
+--- a/shared/ui-deck.js
++++ b/shared/ui-deck.js
+@@ -38,7 +38,7 @@
+     heading: 'Deck',
+     icon: 'deck',
+     color: 'linear-gradient(#bf5af2, #5e5ce6)',
+-    desc: 'Tiles on your phone that run shortcuts, media, sound, windows and more on this computer.',
++    desc: '手机上的卡片，可在这台电脑上运行快捷指令、媒体、声音、窗口等。',
+     hidden: (s) => !(s.deck && s.deck.surface && s.deck.surface.length),
+     badge: (s) => (s.deck && s.deck.surface && s.deck.surface.length ? 'on' : ''),
+     build(body) {
+diff --git a/shared/ui-fullkvm.js b/shared/ui-fullkvm.js
+index e9b773d..6fa662a 100644
+--- a/shared/ui-fullkvm.js
++++ b/shared/ui-fullkvm.js
+@@ -20,7 +20,7 @@
+     icon: 'fullkvm', // the icon sets (windows/ and linux/ui-kit.js, mac/control.js)
+     title: 'Full KVM',
+     color: COLOR,
+-    desc: 'The mouse and keyboard on the lock screen, admin prompts and the login screen.',
++    desc: '锁屏、管理员提示和登录界面上的鼠标和键盘。',
+     build(body) {
+       const t = (...a) => I18n.t(...a);
+       let st = api ? null : { mode: 'off' };
+@@ -29,34 +29,34 @@
+ 
+       const seg = UI.segmented([
+         { value: 'off', label: t('Off') },
+-        { value: 'simple', label: t('Signed in') },
+-        { value: 'system', label: t('Always') },
++        { value: 'simple', label: t('已登录') },
++        { value: 'system', label: t('始终') },
+       ], (mode) => choose(mode));
+       if (!api) for (const b of seg.el.querySelectorAll('button')) b.disabled = true;
+-      const modeRow = UI.row(t('Where the mouse and keyboard reach'), '', [seg]);
+-      const statusRow = UI.row(t('Service'), '', []);
++      const modeRow = UI.row(t('鼠标和键盘的作用范围'), '', [seg]);
++      const statusRow = UI.row(t('服务'), '', []);
+       const err = UI.note('warn', '');
+       const warn = UI.note('info', '');
+ 
+       // The normal build: what it would do, and where to get it.
+-      const only = api ? null : UI.card(t('Only available in Full KVM builds'), [
+-        UI.row(t('This copy of TwinDesk doesn’t include Full KVM'),
+-          t('Full KVM needs a system service that the normal build leaves out. Install the Full KVM build of TwinDesk to use it; your pairings and settings stay as they are.'),
+-          [UI.button(t('Get the Full KVM build'), () => UI.api && UI.api.openLink && UI.api.openLink('releases'), 'small')]),
++      const only = api ? null : UI.card(t('仅在 Full KVM 版中可用'), [
++        UI.row(t('此 TwinDesk 副本不包含 Full KVM'),
++          t('Full KVM 需要普通版未包含的系统服务。安装 Full KVM 版 TwinDesk 即可使用，你的配对和设置都会保持原样。'),
++          [UI.button(t('获取 Full KVM 版'), () => UI.api && UI.api.openLink && UI.api.openLink('releases'), 'small')]),
+       ]);
+ 
+       body.append(
+         ...(only ? [only] : []),
+         UI.card(t('Full KVM'), [modeRow, statusRow, err]),
+-        UI.card(t('What each one does'), [
+-          UI.row(t('Off'), t('As in TwinDesk: the pointer stops at the lock screen, admin prompts and windows run as administrator'), []),
+-          UI.row(t('Signed in'), t('A system service carries the mouse and keyboard to the lock screen, admin prompts (UAC, polkit), Ctrl+Alt+Del and windows run as administrator, while someone is signed in'), []),
+-          UI.row(t('Always'), t('Also the login screen, after a restart or sign-out: the service keeps this computer in the mesh with a copy of its pairings, so the others can sign in on it'), []),
++        UI.card(t('各项的作用'), [
++          UI.row(t('Off'), t('与 TwinDesk 中一致：指针到锁屏、管理员提示和以管理员身份运行的窗口为止'), []),
++          UI.row(t('已登录'), t('系统服务会在有人登录期间，把鼠标和键盘送到锁屏、管理员提示（UAC、polkit）、Ctrl+Alt+Del 以及以管理员身份运行的窗口'), []),
++          UI.row(t('始终'), t('重启或注销后还能覆盖登录界面：该服务带着一份配对信息让这台电脑留在网络中，其他设备可借此在它上面登录'), []),
+         ]),
+         warn,
+         window.FeatureArt && FeatureArt.picture ? FeatureArt.picture('fullkvm', { color: COLOR }) : '',
+       );
+-      warn.set(t('Anyone paired with this computer can then approve admin prompts and type on the lock screen. Turn it on only with devices you trust.'));
++      warn.set(t('此后任何与这台电脑配对的设备都能批准管理员提示并在锁屏上输入。请只对信任的设备开启。'));
+ 
+       const HINT = {
+         off: 'Not installed',
+@@ -68,8 +68,8 @@
+         if (!st) return;
+         seg.set(st.mode);
+         if (!api) {
+-          modeRow.setHint(t('Only in the Full KVM build'));
+-          statusRow.setHint(t('Not in this build'));
++          modeRow.setHint(t('仅在 Full KVM 版中可用'));
++          statusRow.setHint(t('此版本无此项'));
+           return;
+         }
+         modeRow.setHint(t(HINT[st.mode] || ''));
+diff --git a/shared/ui-ios-sign.js b/shared/ui-ios-sign.js
+index 79e0e03..02fcb57 100644
+--- a/shared/ui-ios-sign.js
++++ b/shared/ui-ios-sign.js
+@@ -106,10 +106,10 @@
+       const warn = el('div', { class: 'ios-warn', attrs: { role: 'note' } }, [
+         warnIcon(),
+         el('div', { class: 'body' }, [
+-          el('div', { class: 'title', text: tr('Not recommended') }),
+-          el('p', { text: tr('This feature signs in to Apple with your Apple ID to request development certificates and provisioning profiles. Apple may reject the sign-in, temporarily lock the account, or prevent it from signing apps. Use a dedicated Apple ID rather than your primary account.') }),
++          el('div', { class: 'title', text: tr('不推荐') }),
++          el('p', { text: tr('此功能会用你的 Apple ID 登录 Apple 以申请开发证书和描述文件。Apple 可能会拒绝登录、临时锁定该账号，或禁止它签名应用。请使用专用的 Apple ID，不要用主账号。') }),
+           el('div', { class: 'alt' }, [
+-            el('span', { text: tr('We recommend AltStore for installing and refreshing TwinDesk.') }),
++            el('span', { text: tr('我们推荐用 AltStore 安装和续签 TwinDesk。') }),
+             UI.button('altstore.io', () => api().openLink && api().openLink('https://altstore.io'), 'small'),
+           ]),
+         ]),
+@@ -120,10 +120,10 @@
+       const hero = el('div', { class: 'ios-hero', attrs: { 'aria-hidden': 'true' } }, [heroArt()]);
+       const webNote = el('div', { class: 'ios-alt' }, [
+         el('div', { class: 'body' }, [
+-          el('div', { class: 'title', text: tr('New to iOS sideloading?') }),
+-          el('p', { text: tr('Use TwinDesk Web instead. It runs in Safari on the iPhone or iPad, with nothing to install, sign or refresh.') }),
++          el('div', { class: 'title', text: tr('刚接触 iOS 侧载？') }),
++          el('p', { text: tr('可以改用 TwinDesk Web：它直接在 iPhone 或 iPad 的 Safari 中运行，无需安装、签名或续签。') }),
+         ]),
+-        UI.button(tr('Open TwinDesk Web'), () => UI.go('web'), 'small primary'),
++        UI.button(tr('打开 TwinDesk Web'), () => UI.go('web'), 'small primary'),
+       ]);
+ 
+       // ---- a run's progress (at the top while one runs), and Apple's questions ----
+@@ -215,7 +215,7 @@
+       // ---- how this works ----
+       const anisette = el('p');
+       const how = el('details', { class: 'ios-how' }, [
+-        el('summary', { text: tr('How this works') }),
++        el('summary', { text: tr('运作方式') }),
+         el('p', { text: tr('Apps installed outside the App Store with a free Apple ID use a provisioning profile that is valid for 7 days, after which they must be signed again. AltStore and Sideloadly automate this; this feature does the same from TwinDesk.') }),
+         el('p', { text: tr('{computer} authenticates with Apple through the same developer services Xcode uses, requests a development certificate named “TwinDesk”, registers the device and the app ID, signs the app and installs it over USB or Wi-Fi sync.', { computer: Here }) }),
+         el('p', { text: tr('A refresh, like AltStore’s, only installs Apple’s new provisioning profiles: the app and its data stay as they are. The app is signed and installed again only when its certificate has changed.') }),
+diff --git a/shared/ui-messages.js b/shared/ui-messages.js
+index 042c3c1..e3c3504 100644
+--- a/shared/ui-messages.js
++++ b/shared/ui-messages.js
+@@ -217,7 +217,7 @@ UI.tab({
+       }
+       return own.concat([...by.values()]).filter((t) => !hiddenApps.has(t.app) && !isGone(t.key, t.at)).sort((a, b) => b.at - a.at);
+     }
+-    // A chat app's notice that isn't a message: "Sending video…", "Deleting chats… 100%".
++    // A chat app's notice that isn't a message: "正在发送视频…", "Deleting chats… 100%".
+     const BUSY = /^(?:sending|uploading|downloading|deleting|backing up|restoring|checking for new messages|preparing|syncing)\b|\b\d{1,3}\s?%\s*$/i;
+     // A conversation's last message, as its row shows it.
+     function snippetOf(t) {
+diff --git a/shared/ui-web.js b/shared/ui-web.js
+index e42cc0b..da42dc5 100644
+--- a/shared/ui-web.js
++++ b/shared/ui-web.js
+@@ -109,7 +109,7 @@
+     icon: 'globe',
+     title: 'TwinDesk Web',
+     heading: 'twindesk.local (TwinDesk Web)', // the page's title; the sidebar keeps TwinDesk Web
+-    desc: 'Use an iPhone, iPad or any device with a web browser with this computer: no app to install. Pair it once with the QR code.',
++    desc: '在这台电脑上使用 iPhone、iPad 或任何带浏览器的设备：无需安装应用，用二维码配对一次即可。',
+     color: 'linear-gradient(#5ac8fa, #007aff)',
+     master: { get: (s) => !!W(s).cfg.on, set: (v) => api().webSet({ on: v }) },
+     badge: (s) => (W(s).running ? (W(s).devices.some((d) => d.online) ? 'on' : '') : ''),
+@@ -132,14 +132,14 @@
+       const controlSw = sw('control');
+       const camSw = sw('camera');
+       const micSw = sw('mic');
+-      const allowCard = UI.card(tr('New devices can'), [
+-        UI.row(tr('View this screen and play its audio'), tr('One device at a time. Extend adds a separate display for it.'), [screenSw]),
+-        UI.row(tr('Control this computer'), tr('Mouse and keyboard from the screen viewer, and the Remote page’s touchpad, keyboard and gamepad.'), [controlSw]),
+-        UI.row(tr('Use their cameras on this computer'), tr('The video appears on the device’s Camera page and in TwinDesk Camera.'), [camSw]),
+-        UI.row(tr('Use their microphones on this computer'), tr('Plays into a virtual audio cable when one is installed (BlackHole, VB-Cable), else the speakers.'), [micSw]),
++      const allowCard = UI.card(tr('新设备可以'), [
++        UI.row(tr('查看此屏幕并播放其声音'), tr('同一时间仅限一台设备。开启“扩展”可为它增加一块独立显示屏。'), [screenSw]),
++        UI.row(tr('控制这台电脑'), tr('可用屏幕查看器中的鼠标和键盘，以及“遥控”页面的触控板、键盘和手柄。'), [controlSw]),
++        UI.row(tr('在这台电脑上使用它们的摄像头'), tr('画面会显示在该设备的“摄像头”页面和 TwinDesk 摄像头中。'), [camSw]),
++        UI.row(tr('在这台电脑上使用它们的麦克风'), tr('安装了虚拟音频线（BlackHole、VB-Cable）时输出到虚拟音频线，否则输出到扬声器。'), [micSw]),
+       ]);
+       const list = el('div');
+-      const devCard = UI.card(tr('Paired devices'), [list]);
++      const devCard = UI.card(tr('已配对设备'), [list]);
+       // The short name to type, typing itself out: on or off (off, it says to turn it on first).
+       const visitHint = el('div', { class: 'hint' });
+       const visitCard = UI.card(tr('Visit twindesk.local'), [el('div', { class: 'wt' }, [UI.typingBar('twindesk.local'), visitHint])], { cls: 'keep-on' });
+@@ -180,7 +180,7 @@
+             UI.button(tr('Open'), () => UI.openWebDev(d.id), 'small'),
+             UI.button(tr('Forget'), () => api().webForget(d.id), 'small'),
+           ], { literal: true });
+-        }) : [UI.row(tr('No devices yet'), tr('Paired devices appear here and in the sidebar.'), [])]));
++        }) : [UI.row(tr('No devices yet'), tr('已配对的设备会显示在这里和侧边栏中。'), [])]));
+       };
+     },
+   });
+@@ -273,7 +273,7 @@
+     order: 91,
+     icon: 'folder',
+     title: 'AirPlay & SMB',
+-    desc: 'This computer’s shared folder in the Files app on an iPhone or iPad, and AirPlay.',
++    desc: '在 iPhone 或 iPad 的“文件”App 中访问这台电脑的共享文件夹，以及 AirPlay。',
+     color: 'linear-gradient(#ffd60a, #ff9f0a)',
+     badge: (s) => ((W(s).share && W(s).share.on) || (W(s).airplay && W(s).airplay.on) ? 'on' : ''),
+     build(body) {
+@@ -284,7 +284,7 @@
+       const userRow = UI.row(tr('User name'), '', [], { literalHint: true });
+       const pwRow = UI.row(tr('Password'), tr('Shown on the device’s Mount page in TwinDesk Web, with the steps.'), []);
+       const shareErr = el('div', { class: 'note warn', hidden: true });
+-      const smbCard = UI.card(tr('Folder sharing (SMB)'), [shareRow, folderRow, addrRow, userRow, pwRow]);
++      const smbCard = UI.card(tr('文件夹共享（SMB）'), [shareRow, folderRow, addrRow, userRow, pwRow]);
+       const steps = el('ol', { class: 'web-steps' }, [
+         el('li', { text: tr('On the iPhone or iPad, open Files, tap ••• and choose Connect to Server.') }),
+         el('li', { text: tr('Enter the server address, choose Registered User, and enter the user name and password.') }),
+@@ -297,7 +297,7 @@
+       const airSw = mac ? null : UI.switch((v) => api().webAirplaySet(v));
+       const airRow = mac
+         ? UI.row(tr('AirPlay Receiver'), tr('This Mac receives AirPlay itself: System Settings › General › AirDrop & Handoff › AirPlay Receiver. An iPhone or iPad then mirrors to it from Control Center.'))
+-        : UI.row(tr('Receive AirPlay'), '', [airSw.el], { literalHint: true });
++        : UI.row(tr('接收 AirPlay'), '', [airSw.el], { literalHint: true });
+       const liveRow = mac ? null : UI.row(tr('Mirroring'), '', [UI.button(tr('Stop'), () => api().webAirplayStop(), 'small')], { literalHint: true });
+       // The receiver's switches (settings.web.airplayMusic / airplaySound / airplayFull).
+       const opt = (k) => UI.switch((v) => api().webAirplayOpt({ [k]: v }));
+@@ -323,7 +323,7 @@
+         const on = !!m.on;
+         shareSw.set(on);
+         shareSw.disable(!!m.busy);
+-        shareRow.setHint(m.busy ? tr('Working…') : on ? tr('Shared as {share}', { share: m.name || 'MacShare' }) : tr('Asks for an administrator password once.'));
++        shareRow.setHint(m.busy ? tr('Working…') : on ? tr('Shared as {share}', { share: m.name || 'MacShare' }) : tr('会要求输入一次管理员密码。'));
+         folderRow.setHint(m.folder || '');
+         shareErr.hidden = !m.error;
+         shareErr.textContent = m.error ? tr(m.error) : '';
+@@ -338,7 +338,7 @@
+           airSw.set(!!a.on);
+           airRow.setHint(a.on
+             ? tr('On iPhone or iPad: Control Center › Screen Mirroring › {name}. The screen and its sound show in a window here.', { name: a.name || me(s) })
+-            : tr('Shows an iPhone’s, iPad’s or Mac’s screen here with Screen Mirroring, for anyone on the same network.'));
++            : tr('让同一网络中的任何人通过“屏幕镜像”把 iPhone、iPad 或 Mac 的屏幕投到这里。'));
+           musicSw.set(a.music !== false);
+           soundSw.set(a.sound !== false);
+           fullSw.set(a.full === true);
+@@ -423,7 +423,7 @@
+       const sub = el('div', { class: 'hero-status' });
+       const facts = el('dl', { class: 'dv-facts' });
+       const dropBtn = iconed(UI.button(tr('Send files'), () => UI.webDev && api().webChooseFiles({ id: UI.webDev, kind: 'files' }), 'primary'), 'files');
+-      const chatBtn = iconed(UI.button(tr('Drop'), () => UI.go('wd-drop')), 'drop');
++      const chatBtn = iconed(UI.button(tr('投递'), () => UI.go('wd-drop')), 'drop');
+       const stopBtn = iconed(UI.button(tr('Stop screen'), () => UI.webDev && api().webStopScreen(UI.webDev)), 'stop');
+       const offBtn = iconed(UI.button(tr('Disconnect'), () => UI.webDev && api().webDisconnect(UI.webDev)), 'disconnect');
+       const hero = el('div', { class: 'card dv-hero' }, [pic, el('div', { class: 'dv-hero-main' }, [name, sub, el('div', { class: 'dv-actions' }, [dropBtn, chatBtn, stopBtn, offBtn])]), facts]);
+@@ -439,7 +439,7 @@
+ 
+       // Drop and Send files on the left; the clipboard on the right.
+       const dropList = el('div', { class: 'history web-ov-drop' });
+-      const dropCard = UI.card(tr('Drop'), [dropList], { actions: [UI.button(tr('Open'), () => UI.go('wd-drop'), 'small link')] });
++      const dropCard = UI.card(tr('投递'), [dropList], { actions: [UI.button(tr('Open'), () => UI.go('wd-drop'), 'small link')] });
+       const clipText = el('div', { class: 'web-ov-clip' });
+       const clipCard = UI.card(tr('Clipboard'), [clipText], { actions: [UI.button(tr('See all'), () => UI.go('wd-clipboard'), 'small link')] });
+       const zoneHint = el('div', { class: 'hint' });
+@@ -522,7 +522,7 @@
+ 
+   devPage('wd-share', 'share', {
+     group: 'w1', order: 92.1, title: 'Share screen',
+-    desc: 'This computer’s screen on the device. The device starts it from its Receive screen page.',
++    desc: '在这台电脑上查看设备的屏幕。设备从它的“接收屏幕”页面发起。',
+     build(body) {
+       const screenSw = allowSw('screen');
+       const extendSw = allowSw('extend');
+@@ -576,7 +576,7 @@
+ 
+   devPage('wd-receive', 'receive', {
+     group: 'w1', order: 92.11, title: 'Receive screen',
+-    desc: 'The device’s screen in a window on this computer. The device starts it from its Send Screen page.',
++    desc: '在电脑窗口中显示设备的屏幕。设备从它的“发送屏幕”页面发起。',
+     build(body) {
+       const sw = allowSw('share');
+       const fullSw = allowSw('scrFull');
+@@ -624,7 +624,7 @@
+ 
+   devPage('wd-remote', 'remote', {
+     group: 'w2', order: 92.2, title: 'Remote',
+-    desc: 'Use the device as a touchpad, keyboard and gamepad for this computer.',
++    desc: '把设备当作这台电脑的触控板、键盘和手柄使用。',
+     build(body) {
+       const sw = allowSw('control');
+       const stRow = UI.row(tr('Status'), '', [], { literalHint: true });
+@@ -656,7 +656,7 @@
+ 
+   devPage('wd-clipboard', 'clipboard', {
+     group: 'w3', order: 92.3, title: 'Clipboard',
+-    desc: 'Copy on one, paste on the other.',
++    desc: '在一台设备上复制，在另一台上粘贴。',
+     build(body) {
+       const out = allowSw('clipOut');
+       const inn = allowSw('clipIn');
+@@ -680,7 +680,7 @@
+ 
+   devPage('wd-notifications', 'notifications', {
+     group: 'w3', order: 92.31, title: 'Notifications',
+-    desc: 'This computer’s notifications on the device.',
++    desc: '把这台电脑的通知显示在设备上。',
+     build(body) {
+       const sw = allowSw('notifs');
+       const devRow = UI.row(tr('On the device'), '', [], { literalHint: true });
+@@ -696,7 +696,7 @@
+ 
+   devPage('wd-files', 'files', {
+     group: 'w3', order: 92.32, title: 'Files',
+-    desc: 'Files from the device, and where they go.',
++    desc: '来自设备的文件，以及它们存放的位置。',
+     build(body) {
+       const sw = allowSw('files');
+       const folderRow = UI.row(tr('Save them in'), '', [UI.button(tr('Choose…'), () => UI.webDev && api().webChooseFolder(UI.webDev), 'small'), UI.button(tr('Default'), () => UI.webDev && api().webAllow({ id: UI.webDev, folder: '' }), 'small')], { literalHint: true });
+@@ -765,8 +765,8 @@
+ 
+   // Drop: one conversation, as Messages shows one (shared/ui-messages.js, phonehub.css).
+   UI.tab({
+-    id: 'wd-drop', web: true, group: 'w3', order: 92.33, icon: 'message', title: 'Drop', color: 'linear-gradient(#ffcc00, #ff9500)',
+-    desc: 'Messages and files with this device. Drag files here to send them.',
++    id: 'wd-drop', web: true, group: 'w3', order: 92.33, icon: 'message', title: '投递', color: 'linear-gradient(#ffcc00, #ff9500)',
++    desc: '与这台设备互发消息和文件。把文件拖到这里即可发送。',
+     build(body) {
+       body.setAttribute('data-literal', '');
+       const bubbles = el('div', { class: 'hub-bubbles' });
+@@ -865,7 +865,7 @@
+ 
+   devPage('wd-audio', 'audio', {
+     group: 'w4', order: 92.4, title: 'Audio',
+-    desc: 'This computer’s sound on the device, and the device’s microphone here.',
++    desc: '把电脑的声音送到设备，把设备的麦克风接到这里。',
+     build(body) {
+       const snd = allowSw('sound');
+       const mic = allowSw('mic');
+@@ -891,7 +891,7 @@
+ 
+   devPage('wd-camera', 'camera', {
+     group: 'w4', order: 92.41, title: 'Camera',
+-    desc: 'The device’s camera on this computer. It starts from the device’s Camera page.',
++    desc: '在电脑上使用设备的摄像头。需从设备的“摄像头”页面发起。',
+     build(body) {
+       const sw = allowSw('camera');
+       const img = el('img', { class: 'web-cam', alt: '' });
+diff --git a/shared/vcam.js b/shared/vcam.js
+index 9816e0b..e99b06e 100644
+--- a/shared/vcam.js
++++ b/shared/vcam.js
+@@ -120,7 +120,7 @@ class VirtualCam {
+       const r = await this.driver.check(this.target);
+       this._set({ checked: true, supported: r.supported !== false, installed: !!r.installed, message: r.message || '' });
+     } catch (e) {
+-      this._set({ checked: true, message: 'Couldn’t check the virtual camera: ' + e.message });
++      this._set({ checked: true, message: '无法检查虚拟摄像头：' + e.message });
+     }
+     if (this.on && this.state.supported && !this.state.installed && !this.state.busy) await this.install();
+   }
+@@ -158,7 +158,7 @@ class VirtualCam {
+       await this.driver.remove(this.target);
+       this.state.installed = false;
+     } catch (e) {
+-      this.state.message = 'Couldn’t remove it: ' + e.message;
++      this.state.message = '无法移除：' + e.message;
+     }
+     try {
+       const r = await this.driver.check(this.target);
+diff --git a/shared/web/webhub.js b/shared/web/webhub.js
+index 20d2416..ba84f75 100644
+--- a/shared/web/webhub.js
++++ b/shared/web/webhub.js
+@@ -383,7 +383,7 @@ class WebHub extends EventEmitter {
+         shortcuts: [
+           { name: 'Send files', url: '/?go=files', icons: [{ src: '/icon.png', sizes: '512x512' }] },
+           { name: 'Clipboard', url: '/?go=clipboard', icons: [{ src: '/icon.png', sizes: '512x512' }] },
+-          { name: 'Touchpad', url: '/?go=touchpad', icons: [{ src: '/icon.png', sizes: '512x512' }] },
++          { name: '触控板', url: '/?go=touchpad', icons: [{ src: '/icon.png', sizes: '512x512' }] },
+         ],
+       }));
+     }
+diff --git a/web/app.js b/web/app.js
+index 666f8a7..a93e6d2 100644
+--- a/web/app.js
++++ b/web/app.js
+@@ -22,9 +22,12 @@
+   const LANGUAGES = [['en', 'English', '🇬🇧'], ['zh-CN', '简体中文', '🇨🇳'], ['ru', 'Русский', '🇷🇺'], ['tr', 'Türkçe', '🇹🇷'], ['pt-BR', 'Português (Brasil)', '🇧🇷']];
+   const LANG = (window.TwinDeskWeb && window.TwinDeskWeb.lang) || 'en';
+   const MESSAGES = (window.TwinDeskWeb && window.TwinDeskWeb.messages) || {};
++  // Simplified Chinese falls back to /lang/zh-extra.js for the messages this page still writes in
++  // English (its catalog has no entry); other languages keep the page's own English.
++  const EXTRA = (LANG === 'zh-CN' && window.TwinDeskZhExtra) || {};
+   document.documentElement.lang = LANG;
+   function tr(text, vars) {
+-    const s = MESSAGES[text] || text.replace(/^[^|]*\|/, '');
++    const s = MESSAGES[text] || EXTRA[text] || text.replace(/^[^|]*\|/, '');
+     return vars ? s.replace(/\{(\w+)\}/g, (x, k) => (k in vars ? String(vars[k]) : x)) : s;
+   }
+   // A sentence with elements in it (a link, a name in bold): its parts, in this language's order.
+diff --git a/web/lang/pick.js b/web/lang/pick.js
+index c7b748d..21ba8eb 100644
+--- a/web/lang/pick.js
++++ b/web/lang/pick.js
+@@ -12,5 +12,8 @@
+     lang = /^zh/.test(b) ? (/hant|-tw$|-hk$|-mo$/.test(b) ? 'en' : 'zh-CN') : /^ru/.test(b) ? 'ru' : /^tr/.test(b) ? 'tr' : /^pt/.test(b) ? 'pt-BR' : 'en';
+   }
+   if (KNOWN.indexOf(lang) < 0) return;
++  // Simplified Chinese reads /lang/zh-extra.js too: the messages web/app.js still writes in English,
++  // which the catalog does not carry.
++  if (lang === 'zh-CN') document.write('<script src="/lang/zh-extra.js"></' + 'script>');
+   document.write('<script src="/lang/' + lang + '.js"></' + 'script>');
+ })();
+diff --git a/windows/app.html b/windows/app.html
+index 0b3e0fd..e7664ff 100644
+--- a/windows/app.html
++++ b/windows/app.html
+@@ -19,12 +19,12 @@
+   <script src="../shared/look-early.js"></script>
+ </head>
+ <body>
+-  <nav id="sidebar" aria-label="Sections" data-i18n-label="Sections">
++  <nav id="sidebar" aria-label="分区" data-i18n-label="Sections">
+     <div class="identity">
+       <div class="app-mark" aria-hidden="true"></div>
+       <div class="who">
+         <div class="app-name">TwinDesk</div>
+-        <div class="peer"><span id="peer-dot" class="dot"></span><span id="peer-text" data-i18n>Not paired</span></div>
++        <div class="peer"><span id="peer-dot" class="dot"></span><span id="peer-text" data-i18n>未配对</span></div>
+       </div>
+     </div>
+     <div id="phones"></div>
+@@ -36,13 +36,13 @@
+   <main id="content">
+     <section id="banner" class="banner" hidden>
+       <div class="banner-text">
+-        <div><strong id="pair-title" data-i18n>Pairing</strong></div>
+-        <div id="pair-code-wrap"><span class="code-label" data-i18n>Code</span> <span id="pair-code" class="code"></span></div>
++        <div><strong id="pair-title" data-i18n>正在配对</strong></div>
++        <div id="pair-code-wrap"><span class="code-label" data-i18n>配对码</span> <span id="pair-code" class="code"></span></div>
+         <div id="pair-hint" class="hint"></div>
+       </div>
+       <div class="banner-actions">
+-        <button id="pair-match" class="btn primary" data-i18n>Codes match</button>
+-        <button id="pair-cancel" class="btn" data-i18n>Cancel</button>
++        <button id="pair-match" class="btn primary" data-i18n>配对码一致</button>
++        <button id="pair-cancel" class="btn" data-i18n>取消</button>
+       </div>
+     </section>
+     <div id="pages"></div>
+diff --git a/windows/apps.js b/windows/apps.js
+index 2462a98..2ad279b 100644
+--- a/windows/apps.js
++++ b/windows/apps.js
+@@ -147,7 +147,7 @@ class Apps {
+       });
+       if (!ok) throw new Error('Windows refused the shortcut');
+     } catch (e) {
+-      this.message = 'Couldn’t add ' + a.name + ' to Start: ' + e.message;
++      this.message = '无法添加 ' + a.name + ' to Start: ' + e.message;
+       this.onChange();
+       return false;
+     }
+diff --git a/windows/appview.html b/windows/appview.html
+index cfeb038..e84b4a1 100644
+--- a/windows/appview.html
++++ b/windows/appview.html
+@@ -4,7 +4,7 @@
+ <head>
+   <meta charset="utf-8">
+   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'unsafe-inline'; media-src 'self' blob: mediastream:">
+-  <title data-i18n="App">App</title>
++  <title data-i18n="App">应用</title>
+   <style>
+     html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
+     #video { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; }
+@@ -15,7 +15,7 @@
+ </head>
+ <body>
+   <video id="video" autoplay playsinline muted disablepictureinpicture></video>
+-  <div id="overlay" data-i18n="Connecting…">Connecting…</div>
++  <div id="overlay" data-i18n="正在连接…">正在连接…</div>
+   <script src="../shared/lang/en.js"></script>
+   <script src="../shared/lang/pick.js"></script>
+   <script src="../shared/i18n.js"></script>
+diff --git a/windows/firewall.js b/windows/firewall.js
+index db0c0b5..af1356b 100644
+--- a/windows/firewall.js
++++ b/windows/firewall.js
+@@ -42,7 +42,7 @@ async function check(exe = process.execPath) {
+   try {
+     return { ...interpret(JSON.parse(await script('firewall-status', { Exe: exe }) || '{}')), checkedAt: Date.now() };
+   } catch (e) {
+-    return { ok: false, message: 'Couldn’t check the firewall: ' + e.message, error: true, checkedAt: Date.now() };
++    return { ok: false, message: '无法检查防火墙：' + e.message, error: true, checkedAt: Date.now() };
+   }
+ }
+ 
+diff --git a/windows/installer/build.js b/windows/installer/build.js
+index 846dc39..fa4278a 100644
+--- a/windows/installer/build.js
++++ b/windows/installer/build.js
+@@ -65,7 +65,14 @@ async function main() {
+   if (STORE) delete process.env.TWINDESK_SIGNER_ANY_IPA; // ios-signer/build.cmd: TwinDesk's own IPA only
+   // The helper needs Windows' C# compiler; elsewhere (a Mac) the installer reuses the .exe already
+   // in windows-helper/bin/, e.g. one taken from the last release.
+-  if (process.platform === 'win32') {
++  const HELPER_EXE = path.join(ROOT, 'windows-helper', 'bin', 'macshare-winhelper.exe');
++  if (process.env.TWINDESK_SKIP_HELPER_BUILD === '1') {
++    // Chinese build: this PC has no Windows SDK (UnionMetadata\Windows.winmd), so the C# helper,
++    // the calls' package and the C++ pieces can't be compiled here; the ones already built by
++    // upstream for 3.2.1 are in windows-helper/bin/ and are reused unchanged.
++    if (!fs.existsSync(HELPER_EXE)) throw new Error('TWINDESK_SKIP_HELPER_BUILD=1 but windows-helper/bin/macshare-winhelper.exe is missing');
++    console.log('Using the helper already in windows-helper/bin/ (build.cmd skipped)');
++  } else if (process.platform === 'win32') {
+     console.log('Building the helper…');
+     execFileSync('cmd.exe', ['/c', path.join(ROOT, 'windows-helper', 'build.cmd')], { stdio: 'inherit' });
+   } else if (!fs.existsSync(path.join(ROOT, 'windows-helper', 'bin', 'macshare-winhelper.exe'))) {
+@@ -93,7 +100,7 @@ async function main() {
+   copy(path.join(ROOT, 'windows-helper', 'bin', 'macshare-winhelper.exe'),
+     path.join(STAGE, 'windows-helper', 'bin', 'macshare-winhelper.exe'));
+   // iPhone app signing's helper (ios-signer/, shared/iossign.js): optional, built with cargo.
+-  if (process.platform === 'win32') {
++  if (process.platform === 'win32' && process.env.TWINDESK_SKIP_HELPER_BUILD !== '1') {
+     try { execFileSync('cmd.exe', ['/c', path.join(ROOT, 'ios-signer', 'build.cmd')], { stdio: 'inherit' }); } catch { console.log('note: the iOS signing helper didn’t build'); }
+   }
+   if (STORE) checkSigner();
+diff --git a/windows/ipc.js b/windows/ipc.js
+index 0965a44..856d841 100644
+--- a/windows/ipc.js
++++ b/windows/ipc.js
+@@ -139,7 +139,7 @@ function setupIpc(ctx) {
+     const kind = o && o.kind;
+     const r = await dialog.showOpenDialog(BrowserWindow.getFocusedWindow() || undefined, {
+       properties: kind === 'folder' ? ['openDirectory'] : kind === 'any' ? ['openFile', 'openDirectory'] : ['openFile'],
+-      ...(kind === 'script' ? { title: 'Choose a script', buttonLabel: 'Choose' } : {}),
++      ...(kind === 'script' ? { title: '选择脚本', buttonLabel: '选择' } : {}),
+     });
+     return r.canceled || !r.filePaths.length ? '' : r.filePaths[0];
+   });
+@@ -261,7 +261,7 @@ function setupIpc(ctx) {
+   // General › Received files (shared/received.js): chosen here only, never by the page itself.
+   handle('chooseReceivedFolder', async () => {
+     const win = BrowserWindow.getFocusedWindow();
+-    const r = await dialog.showOpenDialog(win, { title: 'Folder for received files', buttonLabel: 'Use this folder',
++    const r = await dialog.showOpenDialog(win, { title: '接收文件的文件夹', buttonLabel: '使用此文件夹',
+       defaultPath: receivedDir(settings, app.getPath('downloads')), properties: ['openDirectory', 'createDirectory'] });
+     if (!r.canceled && r.filePaths[0]) change('files', { receivedFolder: r.filePaths[0] });
+   });
+@@ -270,7 +270,7 @@ function setupIpc(ctx) {
+   handle('setShareOn', (on) => smb.setShareOn(on === true));
+   handle('chooseShareFolder', async () => {
+     const win = BrowserWindow.getFocusedWindow();
+-    const r = await dialog.showOpenDialog(win, { title: 'Folder to share with the other computer', properties: ['openDirectory', 'createDirectory'] });
++    const r = await dialog.showOpenDialog(win, { title: '与其他电脑共享的文件夹', properties: ['openDirectory', 'createDirectory'] });
+     if (!r.canceled && r.filePaths[0]) await smb.chooseFolder(r.filePaths[0]);
+   });
+   handle('removeShare', () => smb.unshare());
+diff --git a/windows/main.js b/windows/main.js
+index 766484d..5e2b7d4 100644
+--- a/windows/main.js
++++ b/windows/main.js
+@@ -1374,7 +1374,7 @@ async function fixFirewall() {
+   try {
+     fw = { ...(await firewall.fix(fw)), checking: false };
+   } catch (e) {
+-    fw = { ...fw, checking: false, message: 'Not fixed: ' + (/cancel/i.test(e.message) ? 'the administrator prompt was declined' : e.message) };
++    fw = { ...fw, checking: false, message: '未修复：' + (/cancel/i.test(e.message) ? 'the administrator prompt was declined' : e.message) };
+   }
+   pushState();
+ }
+diff --git a/windows/mesh/ipc.js b/windows/mesh/ipc.js
+index 27cb9bc..57fc83e 100644
+--- a/windows/mesh/ipc.js
++++ b/windows/mesh/ipc.js
+@@ -229,7 +229,7 @@ function setupIpc(ctx) {
+   // General › Received files (shared/received.js): chosen here only, never by the page itself.
+   handle('chooseReceivedFolder', async () => {
+     const win = BrowserWindow.getFocusedWindow();
+-    const r = await dialog.showOpenDialog(win, { title: 'Folder for received files', buttonLabel: 'Use this folder',
++    const r = await dialog.showOpenDialog(win, { title: '接收文件的文件夹', buttonLabel: '使用此文件夹',
+       defaultPath: receivedDir(settings, app.getPath('downloads')), properties: ['openDirectory', 'createDirectory'] });
+     if (!r.canceled && r.filePaths[0]) change('files', { receivedFolder: r.filePaths[0] });
+   });
+@@ -238,7 +238,7 @@ function setupIpc(ctx) {
+   handle('setShareOn', (on) => smb.setShareOn(on === true));
+   handle('chooseShareFolder', async () => {
+     const win = BrowserWindow.getFocusedWindow();
+-    const r = await dialog.showOpenDialog(win, { title: 'Folder to share with the other computer', properties: ['openDirectory', 'createDirectory'] });
++    const r = await dialog.showOpenDialog(win, { title: '与其他电脑共享的文件夹', properties: ['openDirectory', 'createDirectory'] });
+     if (!r.canceled && r.filePaths[0]) await smb.chooseFolder(r.filePaths[0]);
+   });
+   handle('removeShare', () => smb.unshare());
+@@ -313,7 +313,7 @@ function setupIpc(ctx) {
+     const kind = o && o.kind;
+     const r = await dialog.showOpenDialog(BrowserWindow.getFocusedWindow() || undefined, {
+       properties: kind === 'folder' ? ['openDirectory'] : kind === 'any' ? ['openFile', 'openDirectory'] : ['openFile'],
+-      ...(kind === 'script' ? { title: 'Choose a script', buttonLabel: 'Choose' } : {}),
++      ...(kind === 'script' ? { title: '选择脚本', buttonLabel: '选择' } : {}),
+     });
+     return r.canceled || !r.filePaths.length ? '' : r.filePaths[0];
+   });
+diff --git a/windows/mesh/main.js b/windows/mesh/main.js
+index 3a8634a..8599d5e 100644
+--- a/windows/mesh/main.js
++++ b/windows/mesh/main.js
+@@ -1211,7 +1211,7 @@ async function fixFirewall() {
+   try {
+     fw = { ...(await firewall.fix(fw)), checking: false };
+   } catch (e) {
+-    fw = { ...fw, checking: false, message: 'Not fixed: ' + (/cancel/i.test(e.message) ? 'the administrator prompt was declined' : e.message) };
++    fw = { ...fw, checking: false, message: '未修复：' + (/cancel/i.test(e.message) ? 'the administrator prompt was declined' : e.message) };
+   }
+   pushState();
+ }
+diff --git a/windows/monitor.html b/windows/monitor.html
+index e147462..473ef00 100644
+--- a/windows/monitor.html
++++ b/windows/monitor.html
+@@ -4,25 +4,25 @@
+ <head>
+   <meta charset="utf-8">
+   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; media-src 'self' blob: mediastream:">
+-  <title data-i18n="Monitor 2">Monitor 2</title>
++  <title data-i18n="Monitor 2">显示器 2</title>
+   <link rel="stylesheet" href="monitor.css">
+ </head>
+ <body>
+   <video id="video" autoplay muted playsinline disablepictureinpicture disableremoteplayback></video>
+   <canvas id="framegen" class="hidden"></canvas>
+   <audio id="audio" autoplay></audio>
+-  <div id="overlay" data-i18n="Waiting for the other computer…">Waiting for the other computer…</div>
++  <div id="overlay" data-i18n="正在等待另一台电脑…">正在等待另一台电脑…</div>
+   <pre id="stats" class="hidden"></pre>
+   <div id="drop-status" class="hidden"></div>
+   <div id="bar">
+-    <button id="b-extend" data-i18n="Extend" data-i18n-title="Use this window as an extra screen of the other computer" title="Use this window as an extra screen of the other computer" hidden>Extend</button>
+-    <button id="b-mirror" data-i18n="Mirror" data-i18n-title="Show the other computer’s main screen" title="Show the other computer’s main screen" hidden>Mirror</button>
++    <button id="b-extend" data-i18n="Extend" data-i18n-title="把此窗口用作另一台电脑的扩展屏幕" title="把此窗口用作另一台电脑的扩展屏幕" hidden>扩展</button>
++    <button id="b-mirror" data-i18n="Mirror" data-i18n-title="显示另一台电脑的主屏幕" title="显示另一台电脑的主屏幕" hidden>镜像</button>
+     <span class="sep" id="sep-mode" hidden></span>
+-    <button id="b-fg" data-i18n="Frame generation" data-i18n-title="Frame generation: fills in late or dropped frames" title="Frame generation: fills in late or dropped frames">Frame generation</button>
+-    <button id="b-pin" data-i18n="Keep on top" data-i18n-title="Keep this window over the others" title="Keep this window over the others" aria-pressed="false">Keep on top</button>
+-    <button id="b-full" data-i18n="Full screen" data-i18n-title="Full screen (F11)" title="Full screen (F11)">Full screen</button>
++    <button id="b-fg" data-i18n="Frame generation" data-i18n-title="帧生成：补足延迟或丢失的帧" title="帧生成：补足延迟或丢失的帧">帧生成</button>
++    <button id="b-pin" data-i18n="Keep on top" data-i18n-title="让此窗口始终置顶" title="让此窗口始终置顶" aria-pressed="false">保持置顶</button>
++    <button id="b-full" data-i18n="Full screen" data-i18n-title="全屏（F11）" title="全屏（F11）">全屏</button>
+     <span class="sep" id="sep-stop" hidden></span>
+-    <button id="b-stop" data-i18n="Stop" data-i18n-title="Stop sharing on the other computer" title="Stop sharing on the other computer" hidden>Stop</button>
++    <button id="b-stop" data-i18n="Stop" data-i18n-title="停止在另一台电脑上共享" title="停止在另一台电脑上共享" hidden>停止</button>
+   </div>
+   <script src="../shared/lang/en.js"></script>
+   <script src="../shared/lang/pick.js"></script>
+diff --git a/windows/package.json b/windows/package.json
+index f2e6933..c791bed 100644
+--- a/windows/package.json
++++ b/windows/package.json
+@@ -2,7 +2,7 @@
+   "name": "macshare-win",
+   "productName": "TwinDesk",
+   "version": "3.2.1",
+-  "description": "TwinDesk for Windows: pair with a Mac, view its screen, share mouse, keyboard and clipboard.",
++  "description": "TwinDesk Windows 版：与 Mac 配对，查看屏幕，共享鼠标、键盘与剪贴板。",
+   "license": "GPL-3.0",
+   "private": true,
+   "main": "main.js",
+diff --git a/windows/pcapps.js b/windows/pcapps.js
+index e7fc5d6..c62ea7d 100644
+--- a/windows/pcapps.js
++++ b/windows/pcapps.js
+@@ -230,7 +230,7 @@ class PcApps {
+       this.link.send({ t: T.PAPPS_RESULT, apps });
+     } catch (e) {
+       if (!this._current(generation)) return;
+-      this.message = 'Couldn’t list this PC’s apps: ' + e.message;
++      this.message = '无法列出本机应用：' + e.message;
+       this.link.send({ t: T.PAPPS_RESULT, apps: [] });
+     }
+     this.onChange();
+diff --git a/windows/peerapps.js b/windows/peerapps.js
+index d5f697e..9288d04 100644
+--- a/windows/peerapps.js
++++ b/windows/peerapps.js
+@@ -46,7 +46,7 @@ class PeerApps {
+     link.on(T.PAPP_LAUNCHED, (m) => {
+       if (!this.appsHere || m.ok) return;
+       const a = this.list.find((x) => x.id === String(m.id));
+-      this.message = 'Couldn’t open ' + (a ? a.name : 'the app') + (m.why ? ': ' + m.why : '');
++      this.message = '无法打开 ' + (a ? a.name : 'the app') + (m.why ? ': ' + m.why : '');
+       this.onChange();
+     });
+     link.on(T.PAPP_WINDOWS, (m) => this.active && this.accepting && Array.isArray(m.windows) && this._sync(this.fromMac ? movedOnly(m.windows) : m.windows));
+diff --git a/windows/phoneview.html b/windows/phoneview.html
+index f65f6ba..0fa8b11 100644
+--- a/windows/phoneview.html
++++ b/windows/phoneview.html
+@@ -4,7 +4,7 @@
+ <head>
+   <meta charset="utf-8">
+   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; worker-src 'self'">
+-  <title data-i18n="Phone">Phone</title>
++  <title data-i18n="Phone">手机</title>
+   <link rel="stylesheet" href="phoneview.css">
+ </head>
+ <body>
+@@ -12,14 +12,14 @@
+     <span id="title"></span>
+     <span id="via" hidden></span>
+     <span class="tools"></span>
+-    <button id="fullBtn" class="ctl" data-i18n-title="Fullscreen (F11)" data-i18n-label="Fullscreen" title="Fullscreen (F11)" aria-label="Fullscreen"><svg viewBox="0 0 20 20"><path d="M4 8V4h4 M12 4h4v4 M16 12v4h-4 M8 16H4v-4"/></svg></button>
++    <button id="fullBtn" class="ctl" data-i18n-title="全屏（F11）" data-i18n-label="全屏" title="全屏（F11）" aria-label="全屏"><svg viewBox="0 0 20 20"><path d="M4 8V4h4 M12 4h4v4 M16 12v4h-4 M8 16H4v-4"/></svg></button>
+   </header>
+   <main id="stage">
+     <canvas id="screen" tabindex="0"></canvas>
+-    <div id="status" data-i18n="Connecting to the phone…">Connecting to the phone…</div>
++    <div id="status" data-i18n="正在连接手机…">正在连接手机…</div>
+   </main>
+   <!-- The controls: phoneview-renderer.js puts them in the title bar's tools, or here (Side panel) -->
+-  <nav id="panel" data-i18n-label="Phone controls" aria-label="Phone controls"></nav>
++  <nav id="panel" data-i18n-label="手机控制" aria-label="手机控制"></nav>
+   <script src="../shared/lang/en.js"></script>
+   <script src="../shared/lang/pick.js"></script>
+   <script src="../shared/i18n.js"></script>
+diff --git a/windows/screen.js b/windows/screen.js
+index 049f964..32882b4 100644
+--- a/windows/screen.js
++++ b/windows/screen.js
+@@ -196,7 +196,7 @@ class Screen {
+     const height = Number(m.height) || 0;
+     // audio: the Mac's "Share sound with the screen" — only then is there a sound track.
+     if (this.helper && this.helper.lowLatency) this.helper.lowLatency('screen', true); // Wlan.cs
+-    this.state = { state: 'on', name: typeof m.name === 'string' ? m.name : 'Shared screen', width, height, audio: m.audio === true };
++    this.state = { state: 'on', name: typeof m.name === 'string' ? m.name : '共享屏幕', width, height, audio: m.audio === true };
+     this.replay = []; // a fresh offer follows every stream.info
+     this._relay({ t: T.STREAM_INFO, name: this.state.name, width, height, audio: this.state.audio });
+     this._title();
+diff --git a/windows/sshd.js b/windows/sshd.js
+index e722925..caa2751 100644
+--- a/windows/sshd.js
++++ b/windows/sshd.js
+@@ -123,7 +123,7 @@ class Sshd {
+       this.save();
+       this.message = '';
+     } catch (e) {
+-      this.message = /cancel/i.test(e.message) ? 'The administrator prompt was declined: {name}’s key is still installed' : '{Name}’s key is still installed: ' + e.message;
++      this.message = /cancel/i.test(e.message) ? 'The administrator prompt was declined: {name} 的密钥仍在使用' : '{Name} 的密钥仍在使用: ' + e.message;
+     }
+   }
+ 
+@@ -141,7 +141,7 @@ class Sshd {
+       this.cfg.installedKey = '';
+       this.save();
+     } catch (e) {
+-      this.message = '{Name}’s key is still installed: ' + e.message;
++      this.message = '{Name} 的密钥仍在使用: ' + e.message;
+     }
+     this.onChange();
+   }
+diff --git a/windows/ui-about.js b/windows/ui-about.js
+index a30b291..7bab62b 100644
+--- a/windows/ui-about.js
++++ b/windows/ui-about.js
+@@ -75,7 +75,7 @@ UI.tab({
+       UI.card(I18n.t('Licence'), [
+         UI.row(I18n.t('GNU General Public License v3'), I18n.t('Free and open source. Copyright © 2026 inukaasith'), [link(I18n.t('Read'), 'licence')]),
+         thanksRow,
+-        UI.row('Crafted with ☕ and ❤️ in Sri Lanka 🇱🇰', '', [], { literal: true }),
++        UI.row('在斯里兰卡 🇱🇰 用 ☕ 和 ❤️ 打造', '', [], { literal: true }),
+       ], { cls: 'keep-on' }),
+     );
+ 
+diff --git a/windows/ui-general.js b/windows/ui-general.js
+index 883d58e..6ad5b90 100644
+--- a/windows/ui-general.js
++++ b/windows/ui-general.js
+@@ -119,9 +119,9 @@ UI.tab({
+       UI.card(t('Language'), [
+         UI.row(t('Language'), t('Some pages are still in English. Changing the language restarts TwinDesk.'), [language]),
+       ]),
+-      UI.card(t('Tutorial'), [
+-        UI.row(t('Tour of TwinDesk'), t('How to install TwinDesk on your other device, connect it, and what each page does.'), [UI.button(t('Show the tour'), () => window.Tour && Tour.start(), 'small')]),
+-        UI.row(t('What’s new'), t('What came in this version.'), [UI.button(t('Show'), () => window.Tour && Tour.news(), 'small')]),
++      UI.card(t('教程'), [
++        UI.row(t('TwinDesk 导览'), t('如何在其他设备上安装并连接 TwinDesk，以及每个页面的用途。'), [UI.button(t('开始导览'), () => window.Tour && Tour.start(), 'small')]),
++        UI.row(t('新增内容'), t('本版本带来的变化。'), [UI.button(t('Show'), () => window.Tour && Tour.news(), 'small')]),
+       ]),
+       UI.card(t('Overview'), partRows),
+       UI.card(t('Network and Bluetooth'), [bleRow, blePcRow, bleWifiRow, wakeRow, sendToRow]),
+diff --git a/windows/vdd.js b/windows/vdd.js
+index 8ecad82..c0a7e5f 100644
+--- a/windows/vdd.js
++++ b/windows/vdd.js
+@@ -48,7 +48,7 @@ class Vdd {
+       this._set({ checked: true, installed: !!(r.device && r.tasks), on: r.status === 'OK' });
+       if (this.state.installed && this.state.on && !this.wanted) await this.setOn(false);
+     } catch (e) {
+-      this._set({ checked: true, message: 'Couldn’t check the display driver: ' + e.message });
++      this._set({ checked: true, message: '无法检查显示驱动：' + e.message });
+     }
+   }
+ 
+@@ -76,14 +76,14 @@ class Vdd {
+       // Windows on ARM takes only Microsoft-signed drivers; the ARM64 build is signed by SignPath
+       // only (VirtualDrivers/Virtual-Display-Driver#465). Install works again once a signed one is pinned.
+       else if (cpu === '12' && /800B0109/.test(e.message)) this.state.message = 'Extend isn’t available on Windows on ARM yet: Windows there accepts only Microsoft-signed display drivers, and the virtual display driver’s ARM64 build isn’t one (Virtual-Display-Driver#465)';
+-      else this.state.message = 'Installing the display driver failed: ' + e.message;
++      else this.state.message = '安装显示驱动失败：' + e.message;
+     } finally {
+       try { fs.unlinkSync(log); } catch (_) { /* none */ }
+       this.state.busy = '';
+       await this.check();
+     }
+     // Installed, yet Windows doesn't report the device and its tasks (#116): say so, not just "Not installed".
+-    if (done && !this.state.installed) this._set({ message: 'The display driver was installed, but Windows doesn’t report it back yet. Restart TwinDesk, or this PC, and check again' });
++    if (done && !this.state.installed) this._set({ message: '显示驱动已安装，但 Windows 尚未回报该驱动. Restart TwinDesk, or this PC, and check again' });
+   }
+ 
+   async remove() {
+@@ -111,7 +111,7 @@ class Vdd {
+     if (!this.state.installed) return false;
+     await new Promise((resolve) => execFile(SCHTASKS, ['/run', '/tn', on ? '\\MacShare\\Extend on' : '\\MacShare\\Extend off'],
+       { windowsHide: true, timeout: 15000 }, (err) => {
+-        if (err) this.state.message = 'Couldn’t switch the virtual monitor: ' + String(err.message).split('\n')[0];
++        if (err) this.state.message = '无法切换虚拟显示器：' + String(err.message).split('\n')[0];
+         resolve();
+       }));
+     const until = Date.now() + 20000;

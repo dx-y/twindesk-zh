@@ -1,0 +1,38 @@
+name: build-windows-zh
+
+# 手动触发：拉上游源码 -> 打中文补丁 -> 构建 NSIS 安装包 -> 上传 Artifact
+on:
+  workflow_dispatch:
+    inputs:
+      upstream_tag:
+        description: 上游 tag（如 v3.2.1）
+        required: true
+        default: v3.2.1
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch upstream source
+        shell: pwsh
+        run: ./scripts/fetch-upstream.ps1 -Tag ${{ inputs.upstream_tag }}
+
+      - name: Apply Chinese patch
+        shell: pwsh
+        run: ./scripts/apply-zh.ps1 -Tag ${{ inputs.upstream_tag }}
+
+      - name: Build installer
+        shell: pwsh
+        run: ./scripts/build-windows.ps1 -NpmRegistry https://registry.npmjs.org -ElectronMirror https://github.com/electron/electron/releases/download/v
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: twindesk-zh-installer
+          path: build/src/TwinDesk-*/windows/dist/TwinDesk-Setup-*-zh-CN.exe
+          if-no-files-found: error
+          retention-days: 14

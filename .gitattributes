@@ -1,0 +1,6 @@
+* text=auto
+*.ps1 text eol=crlf
+*.yml text eol=lf
+*.js text eol=lf
+*.patch text eol=lf
+*.png binary

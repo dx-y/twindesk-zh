@@ -1,0 +1,43 @@
+name: publish-release
+
+# 手动触发：把某次 build-windows-zh 产出的安装包发布为 Release
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 发行版标签（如 v3.2.1-zh）
+        required: true
+      build_run_id:
+        description: build-windows-zh 的运行 ID
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: twindesk-zh-installer
+          path: dist
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.build_run_id }}
+
+      - name: Checksums
+        run: |
+          cd dist
+          sha256sum *.exe > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ inputs.release_tag }}" \
+            --repo "${{ github.repository }}" \
+            --title "TwinDesk 简体中文增强版 ${{ inputs.release_tag }}" \
+            --notes "基于上游 ${{ inputs.upstream_tag }} 构建：官方中文 + 代码内英文补齐 + 999 条补充词表。安装包未签名，首次运行按 SmartScreen 提示选「更多信息 → 仍要运行」。" \
+            dist/*.exe dist/SHA256SUMS.txt

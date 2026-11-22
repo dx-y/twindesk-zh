@@ -1,0 +1,9 @@
+project=TwinDesk 简体中文增强版
+upstream=InukaAsith/TwinDesk v3.2.1
+upstream_license=GPL-3.0
+patch=patches/v3.2.1-zh-CN.patch
+extra_catalog=i18n/zh-extra.js
+installer=TwinDesk-Setup-3.2.1-zh-CN.exe
+installer_bytes=133568760
+installer_sha256=97FBD0872BCD416AE85A307B654D8848003941319EFDF862D01BAE30AA9D9CD2
+built_on=2026-11-21
